@@ -608,8 +608,20 @@ function PrizeLadder({ segmentStart, currentIndex, results, screen }) {
   );
 }
 
+// ── Responsive hook ────────────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  return isMobile;
+}
+
 // ── Main App ───────────────────────────────────────────────────────────────
 export default function QuizApp() {
+  const isMobile = useIsMobile();
   const [selectedQuizName, setSelectedQuizName] = useState(availableQuizzes[0]?.name ?? '');
 
   const questions = useMemo(() => {
@@ -785,27 +797,29 @@ export default function QuizApp() {
 
       {/* ── HEADER ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(5,5,8,0.96)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(185,28,28,0.22)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <h1 className="font-display metal-text title-glow" style={{ fontSize: '1.4rem', letterSpacing: '0.06em', lineHeight: 1, flexShrink: 0 }}>
-            Quiz the Tactical Luck Millionaire
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: isMobile ? '6px 12px' : '8px 20px', display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '20px', flexWrap: 'nowrap' }}>
+          <h1 className="font-display metal-text title-glow" style={{ fontSize: isMobile ? '0.95rem' : '1.4rem', letterSpacing: '0.04em', lineHeight: 1, flexShrink: 0 }}>
+            {isMobile ? 'Millionaire' : 'Quiz the Tactical Luck Millionaire'}
           </h1>
-          <div className="font-terminal" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
-            <div style={{ border: '1px solid rgba(50,50,60,0.8)', padding: '4px 10px', background: 'rgba(10,10,14,0.8)' }}>
-              <span style={{ color: '#52525b' }}>問題 </span>
+          <div className="font-terminal" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+            <div style={{ border: '1px solid rgba(50,50,60,0.8)', padding: isMobile ? '3px 6px' : '4px 10px', background: 'rgba(10,10,14,0.8)' }}>
+              <span style={{ color: '#52525b' }}>{isMobile ? '' : '問題 '}</span>
               <span style={{ color: '#fff', fontWeight: 'bold' }}>{displayIndex}</span>
               <span style={{ color: '#3f3f46' }}>/</span>
               <span style={{ color: '#71717a' }}>{totalQuestions}</span>
             </div>
-            <div style={{ border: '1px solid rgba(22,163,74,0.3)', padding: '4px 10px', background: 'rgba(20,83,45,0.15)' }}>
-              <span style={{ color: '#52525b' }}>正解 </span>
-              <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{correctCount}</span>
-            </div>
+            {!isMobile && (
+              <div style={{ border: '1px solid rgba(22,163,74,0.3)', padding: '4px 10px', background: 'rgba(20,83,45,0.15)' }}>
+                <span style={{ color: '#52525b' }}>正解 </span>
+                <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{correctCount}</span>
+              </div>
+            )}
             {(screen === 'quiz' || screen === 'countdown' || screen === 'feedback') && (() => {
               const pos = currentIndex - currentSegmentStart;
               const prize = PRIZE_LADDER[Math.min(pos, PRIZE_LADDER.length - 1)];
               return (
-                <div style={{ border: '1px solid rgba(245,158,11,0.35)', padding: '4px 10px', background: 'rgba(120,53,15,0.15)' }}>
-                  <span style={{ color: '#71717a' }}>挑戦中 </span>
+                <div style={{ border: '1px solid rgba(245,158,11,0.35)', padding: isMobile ? '3px 6px' : '4px 10px', background: 'rgba(120,53,15,0.15)' }}>
+                  {!isMobile && <span style={{ color: '#71717a' }}>挑戦中 </span>}
                   <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{formatPrize(prize)}</span>
                 </div>
               );
@@ -815,14 +829,12 @@ export default function QuizApp() {
           {/* Block dots during quiz/feedback */}
           {(screen === 'quiz' || screen === 'feedback' || screen === 'countdown') ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginLeft: 'auto' }}>
-              <span className="font-terminal" style={{ fontSize: '0.55rem', letterSpacing: '0.15em', color: '#3f3f46' }}>
-                {SEGMENT_SIZE}問ブロック進行
-              </span>
+              {!isMobile && <span className="font-terminal" style={{ fontSize: '0.55rem', letterSpacing: '0.15em', color: '#3f3f46' }}>{SEGMENT_SIZE}問ブロック進行</span>}
               <BlockDots results={results} segmentStart={currentSegmentStart} segmentEnd={currentSegmentEnd} currentIndex={currentIndex} />
             </div>
           ) : (
             <div style={{ marginLeft: 'auto' }}>
-              <RankBadge rank={overallRank} size={42} />
+              <RankBadge rank={overallRank} size={isMobile ? 32 : 42} />
             </div>
           )}
         </div>
@@ -832,11 +844,11 @@ export default function QuizApp() {
       </header>
 
       {/* ── MAIN ── */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px', position: 'relative', zIndex: 10 }}>
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: isMobile ? '12px 12px' : '24px 20px', position: 'relative', zIndex: 10 }}>
 
         {/* ══ START ══ */}
         {screen === 'start' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '70vh', paddingTop: '40px', gap: '32px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '70vh', paddingTop: isMobile ? '20px' : '40px', gap: isMobile ? '20px' : '32px' }}>
             <div style={{ textAlign: 'center' }}>
               <p className="font-terminal" style={{ color: '#7f1d1d', letterSpacing: '0.4em', fontSize: '0.62rem', textTransform: 'uppercase', marginBottom: '8px' }}>
                 ⚔ Tactical Quiz Battle ⚔
@@ -926,13 +938,13 @@ export default function QuizApp() {
         {/* ══ QUIZ ══ */}
         {screen === 'quiz' && currentQuestion && (
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <HudFrame label={`第 ${currentQuestion.id} 問`} className="p-6">
-                <p className="font-tactical" style={{ fontSize: 'clamp(1.2rem,2.5vw,1.7rem)', color: '#e4e4e7', lineHeight: 1.55 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '14px' }}>
+              <HudFrame label={`第 ${currentQuestion.id} 問`} className={isMobile ? 'p-4' : 'p-6'}>
+                <p className="font-tactical" style={{ fontSize: isMobile ? 'clamp(1rem,4vw,1.3rem)' : 'clamp(1.2rem,2.5vw,1.7rem)', color: '#e4e4e7', lineHeight: 1.55 }}>
                   {currentQuestion.prompt}
                 </p>
               </HudFrame>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '8px' : '10px' }}>
                 {CHOICES.map(c => (
                   <ChoiceButton key={c} label={c} text={currentQuestion.choices[c]}
                     selected={selectedChoice === c} revealed={false}
@@ -944,17 +956,21 @@ export default function QuizApp() {
                 onClick={handleFinalAnswer}
                 disabled={!selectedChoice}
                 className={`btn-primary font-display ${selectedChoice ? 'final-btn-active' : ''}`}
-                style={{ fontSize: '2rem', letterSpacing: '0.12em', padding: '1.1rem', border: `2px solid ${selectedChoice ? '#dc2626' : 'rgba(60,15,15,0.5)'}`, background: selectedChoice ? 'linear-gradient(160deg,#5a0a0a,#b91c1c)' : 'rgba(12,8,8,0.8)', color: selectedChoice ? '#fff' : '#3f3f46', boxShadow: selectedChoice ? '0 0 30px rgba(185,28,28,0.5), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none', cursor: selectedChoice ? 'pointer' : 'not-allowed', transition: 'all 0.25s ease' }}>
+                style={{ fontSize: isMobile ? '1.1rem' : '2rem', letterSpacing: isMobile ? '0.05em' : '0.12em', padding: isMobile ? '0.85rem' : '1.1rem', border: `2px solid ${selectedChoice ? '#dc2626' : 'rgba(60,15,15,0.5)'}`, background: selectedChoice ? 'linear-gradient(160deg,#5a0a0a,#b91c1c)' : 'rgba(12,8,8,0.8)', color: selectedChoice ? '#fff' : '#3f3f46', boxShadow: selectedChoice ? '0 0 30px rgba(185,28,28,0.5), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none', cursor: selectedChoice ? 'pointer' : 'not-allowed', transition: 'all 0.25s ease' }}>
                 {selectedChoice
-                  ? `◆  FINAL ANSWER  —  ${selectedChoice}: ${currentQuestion.choices[selectedChoice]}  ◆`
+                  ? isMobile
+                    ? `◆ FINAL ANSWER ◆`
+                    : `◆  FINAL ANSWER  —  ${selectedChoice}: ${currentQuestion.choices[selectedChoice]}  ◆`
                   : '選択肢を選んでください'}
               </button>
             </div>
-            <div style={{ width: '220px', flexShrink: 0 }}>
-              <HudFrame label={`BLOCK ${Math.floor(currentIndex / SEGMENT_SIZE) + 1}`} className="p-3" style={{ background: 'rgba(5,5,8,0.9)' }}>
-                <PrizeLadder segmentStart={currentSegmentStart} currentIndex={currentIndex} results={results} screen={screen} />
-              </HudFrame>
-            </div>
+            {!isMobile && (
+              <div style={{ width: '220px', flexShrink: 0 }}>
+                <HudFrame label={`BLOCK ${Math.floor(currentIndex / SEGMENT_SIZE) + 1}`} className="p-3" style={{ background: 'rgba(5,5,8,0.9)' }}>
+                  <PrizeLadder segmentStart={currentSegmentStart} currentIndex={currentIndex} results={results} screen={screen} />
+                </HudFrame>
+              </div>
+            )}
           </div>
         )}
 
@@ -988,13 +1004,13 @@ export default function QuizApp() {
         {/* ══ FEEDBACK ══ */}
         {screen === 'feedback' && feedback && (
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '14px' }}>
               <HudFrame label={`第 ${feedback.questionId} 問`} accent={feedback.ok ? '#22c55e' : '#dc2626'} className="p-6">
                 <p className="font-tactical" style={{ fontSize: 'clamp(1.2rem,2.5vw,1.7rem)', color: '#e4e4e7', lineHeight: 1.55 }}>
                   {feedback.prompt}
                 </p>
               </HudFrame>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '8px' : '10px' }}>
                 {CHOICES.map(c => (
                   <ChoiceButton key={c} label={c} text={feedback.choices[c]}
                     selected={false} revealed={true}
@@ -1039,11 +1055,13 @@ export default function QuizApp() {
                 })()}
               </button>
             </div>
-            <div style={{ width: '220px', flexShrink: 0 }}>
-              <HudFrame label={`BLOCK ${Math.floor(currentIndex / SEGMENT_SIZE) + 1}`} className="p-3" style={{ background: 'rgba(5,5,8,0.9)' }}>
-                <PrizeLadder segmentStart={currentSegmentStart} currentIndex={currentIndex} results={results} screen={screen} />
-              </HudFrame>
-            </div>
+            {!isMobile && (
+              <div style={{ width: '220px', flexShrink: 0 }}>
+                <HudFrame label={`BLOCK ${Math.floor(currentIndex / SEGMENT_SIZE) + 1}`} className="p-3" style={{ background: 'rgba(5,5,8,0.9)' }}>
+                  <PrizeLadder segmentStart={currentSegmentStart} currentIndex={currentIndex} results={results} screen={screen} />
+                </HudFrame>
+              </div>
+            )}
           </div>
         )}
 
@@ -1066,7 +1084,7 @@ export default function QuizApp() {
                 className="p-10" style={{ width: '100%', maxWidth: '700px', textAlign: 'center', background: 'rgba(5,5,8,0.95)' }}>
                 <p style={{ fontSize: '3.5rem', lineHeight: 1 }}>{isWin ? '🏆🎉' : '💀'}</p>
                 <h2 className="font-display" style={{ fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '0.1em', color: isWin ? '#4ade80' : '#f87171', marginTop: '8px', textShadow: `0 0 30px ${isWin ? 'rgba(74,222,128,0.6)' : 'rgba(248,113,113,0.6)'}` }}>
-                  {isWin ? '全問正解！MILLIONAIRE！' : reachedPos >= 0 ? `第${reachedPos + 1}問で敗退` : '第1問で敗退'}
+                  {isWin ? '全問正解！MILLIONAIRE！' : `第${currentIndex - currentSegmentStart + 1}問で敗退`}
                 </h2>
 
                 {/* 獲得金額 大表示 */}
